@@ -120,7 +120,7 @@ def PsiBuilder2D(x, y, f, g, path, nEvals):
     np.savetxt(f'{path}/eValsLD', eigenVals)
     
     #Representation of the Fokker-Planck operator
-    eigenValsFP, eigenVectsFP = eigs(LDagger.H, k=3, sigma=0)
+    eigenValsFP, eigenVectsFP = eigs(LDagger.conj().T, k=3, sigma=0)
 
     #Stationary density
     giveMeP0(savepath, x, y, eigenValsFP, eigenVectsFP)
@@ -156,42 +156,42 @@ def PsiBuilder2D(x, y, f, g, path, nEvals):
     
     #Probability
     P0data = np.loadtxt(f'{savepath}/P0')
-    P0Func = interp.RegularGridInterpolator((x, y), P0data, bounds_error=False, fill_value=None)
+    P0Func = interp.RegularGridInterpolator((y, x), P0data, bounds_error=False, fill_value=None)
     
     dxP0data = np.loadtxt(f'{savepath}/dxP0')
-    dxP0Func = interp.RegularGridInterpolator((x, y), dxP0data, bounds_error=False, fill_value=None)
+    dxP0Func = interp.RegularGridInterpolator((y, x), dxP0data, bounds_error=False, fill_value=None)
     
     dyP0data = np.loadtxt(f'{savepath}/dyP0')
-    dyP0Func = interp.RegularGridInterpolator((x, y), dyP0data, bounds_error=False, fill_value=None)
+    dyP0Func = interp.RegularGridInterpolator((y, x), dyP0data, bounds_error=False, fill_value=None)
 
     #Q(x,y) (see Pérez-Cervera et al. 2023)
     Qrdata = np.loadtxt(f'{savepath}/R[Q]')
-    QrFunc = interp.RegularGridInterpolator((x, y), Qrdata, bounds_error=False, fill_value=None)
+    QrFunc = interp.RegularGridInterpolator((y, x), Qrdata, bounds_error=False, fill_value=None)
     
     Qimdata = np.loadtxt(f'{savepath}/Im[Q]')
-    QimFunc = interp.RegularGridInterpolator((x, y), Qimdata, bounds_error=False, fill_value=None)
+    QimFunc = interp.RegularGridInterpolator((y, x), Qimdata, bounds_error=False, fill_value=None)
     
     dxQrdata = np.loadtxt(f'{savepath}/dxR[Q]')
-    dxQrFunc = interp.RegularGridInterpolator((x, y), dxQrdata, bounds_error=False, fill_value=None)
+    dxQrFunc = interp.RegularGridInterpolator((y, x), dxQrdata, bounds_error=False, fill_value=None)
     
     dyQrdata = np.loadtxt(f'{savepath}/dyR[Q]')
-    dyQrFunc = interp.RegularGridInterpolator((x, y), dyQrdata, bounds_error=False, fill_value=None)
+    dyQrFunc = interp.RegularGridInterpolator((y, x), dyQrdata, bounds_error=False, fill_value=None)
     
     dxQimdata = np.loadtxt(f'{savepath}/dxIm[Q]')
-    dxQimFunc = interp.RegularGridInterpolator((x, y), dxQimdata, bounds_error=False, fill_value=None)
+    dxQimFunc = interp.RegularGridInterpolator((y, x), dxQimdata, bounds_error=False, fill_value=None)
     
     dyQimdata = np.loadtxt(f'{savepath}/dyIm[Q]')
-    dyQimFunc = interp.RegularGridInterpolator((x, y), dyQimdata, bounds_error=False, fill_value=None)
+    dyQimFunc = interp.RegularGridInterpolator((y, x), dyQimdata, bounds_error=False, fill_value=None)
     
     #Stochastic amplitude (see Pérez-Cervera et al. 2021)
     sigmadata = np.loadtxt(f'{savepath}/isostable_1/isostables')
-    sigmaFunc = interp.RegularGridInterpolator((x, y), sigmadata, bounds_error=False, fill_value=None)
+    sigmaFunc = interp.RegularGridInterpolator((y, x), sigmadata, bounds_error=False, fill_value=None)
     
     dxsigmadata = np.loadtxt(f'{savepath}/dxSigma')
-    dxsigmaFunc = interp.RegularGridInterpolator((x, y), dxsigmadata, bounds_error=False, fill_value=None)
+    dxsigmaFunc = interp.RegularGridInterpolator((y, x), dxsigmadata, bounds_error=False, fill_value=None)
     
     dysigmadata = np.loadtxt(f'{savepath}/dySigma')
-    dysigmaFunc = interp.RegularGridInterpolator((x, y), dysigmadata, bounds_error=False, fill_value=None)
+    dysigmaFunc = interp.RegularGridInterpolator((y, x), dysigmadata, bounds_error=False, fill_value=None)
     
     funcpath  = f'{path}/functions'
     if not os.path.exists(funcpath):
@@ -395,11 +395,11 @@ def find_Q(path, x, y, eigenVals, eigenVects):
     xLC = np.roll(xLC, -index); yLC = np.roll(yLC, -index)
     
     #Interpolate 
-    f_cos = interp.interp2d(x, y, np.cos(isocrones), kind='quintic')
-    f_sin = interp.interp2d(x, y, np.sin(isocrones), kind='quintic')
+    f_cos = interp.RegularGridInterpolator((y, x), np.cos(isocrones), method='quintic')
+    f_sin = interp.RegularGridInterpolator((y, x), np.sin(isocrones), method='quintic')
     
     #Find phase of max
-    phase = np.mod(np.arctan2(f_sin(xLC[0], yLC[0])[0], f_cos(xLC[0], yLC[0])[0]), 2*np.pi)
+    phase = np.mod(np.arctan2(f_sin((yLC[0], xLC[0])), f_cos((yLC[0], xLC[0]))), 2*np.pi)
     
     #0-phase at max x (e.g. spiking)
     isocrones = np.mod(isocrones - phase, 2*np.pi)

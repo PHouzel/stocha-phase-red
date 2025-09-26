@@ -12,7 +12,7 @@ cf Lindner and Schimansky-Geier, PRL 2002
 import numpy as np
 import matplotlib.pyplot as plt
 from .utils import fourier_fit_array
-from scipy.integrate import trapz
+from scipy.integrate import trapezoid as trapz
 from scipy.interpolate import interp1d
 import pickle
 

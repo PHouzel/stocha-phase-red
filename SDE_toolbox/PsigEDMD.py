@@ -14,7 +14,7 @@ from scipy import stats
 from .integrators import EulerSDE
 from .utils import find_lambda_1, unWrapPhase
 
-from .d3s.observables import monomials, FourierBasis
+from .d3s.observables import monomials
 from .d3s.algorithms import gedmd
 
 # Function to find the closest grid point index
@@ -72,8 +72,8 @@ def PsiBuildergEDMD(path, x0, t, f, driftParams, g, noiseParams,
     #Library of observables
     if basis == 'monomials':
         F = monomials(nMon)
-    elif basis == 'fourier':
-        F = FourierBasis(nMon)
+    # elif basis == 'fourier':
+    #     F = FourierBasis(nMon)
     
     
     #Generate long trajectory which we'll use to define a grid
@@ -82,7 +82,7 @@ def PsiBuildergEDMD(path, x0, t, f, driftParams, g, noiseParams,
     nDims, nSteps = traj.shape
     traj = traj[:,int(0.1*nSteps):]
     
-    print(f'Full phase space grid: {grid_resolution**2} points')
+    #print(f'Full phase space grid: {grid_resolution**2} points')
     grid = buildGrid(traj, grid_resolution)
     nDims, nPoints = grid.shape
     print(f'Final grid: {nPoints} points')

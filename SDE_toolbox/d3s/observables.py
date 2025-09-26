@@ -260,3 +260,108 @@ def allMonomialPowers(d, p):
         c[:, i] = nextMonomialPowers(x)
     c = _np.flipud(c) # flip array in the up/down direction
     return c
+    
+class FourierBasis(object):
+    '''
+    Computation of Fourier basis functions in d dimensions.
+    '''
+
+    def __init__(self, p):
+        '''
+        p: int, maximum frequency in the Fourier series.
+        '''
+        self.p = p
+
+    def __call__(self, x):
+        '''
+        Evaluate Fourier basis functions of order up to p for all data points in x.
+        '''
+        [d, m] = x.shape  # d = dimension of state space, m = number of test points
+        c = allFourierFrequencies(d, self.p)  # matrix containing all frequency combinations
+        n = c.shape[1]  # number of Fourier basis functions
+        y = _np.zeros([n, m])
+        for i in range(n):
+            y[i, :] = _np.cos(_np.dot(c[:, i], x)) + _np.sin(_np.dot(c[:, i], x))
+        return y
+    
+    def diff(self, x):
+        '''
+        Compute partial derivatives for all data points in x.
+        '''
+        [d, m] = x.shape  # d = dimension of state space, m = number of test points
+        c = allFourierFrequencies(d, self.p)  # matrix containing all frequency combinations
+        n = c.shape[1]  # number of Fourier basis functions
+        y = _np.zeros([n, d, m])
+        for i in range(n):  # for all Fourier basis functions
+            for j in range(d):  # for all dimensions
+                freq = c[:, i]
+                y[i, j, :] = -freq[j] * _np.sin(_np.dot(freq, x)) + freq[j] * _np.cos(_np.dot(freq, x))
+        return y
+    
+    def ddiff(self, x):
+        '''
+        Compute second order derivatives for all data points in x.
+        '''
+        [d, m] = x.shape  # d = dimension of state space, m = number of test points
+        c = allFourierFrequencies(d, self.p)  # matrix containing all frequency combinations
+        n = c.shape[1]  # number of Fourier basis functions
+        y = _np.zeros([n, d, d, m])
+        for i in range(n):  # for all Fourier basis functions
+            for j1 in range(d):  # for all dimensions
+                for j2 in range(d):  # for all dimensions
+                    freq = c[:, i]
+                    y[i, j1, j2, :] = -freq[j1] * freq[j2] * _np.cos(_np.dot(freq, x)) - freq[j1] * freq[j2] * _np.sin(_np.dot(freq, x))
+        return y
+    
+    def __repr__(self):
+        return 'Fourier basis with maximum frequency %d.' % self.p
+    
+    def display(self, alpha, d, name=None, eps=1e-6):
+        '''
+        Display the Fourier series with coefficients alpha.
+        '''
+        c = allFourierFrequencies(d, self.p)  # matrix containing all frequency combinations
+        
+        if name is not None: 
+            print(name + ' = ', end='')
+        
+        ind, = _np.where(abs(alpha) > eps)
+        k = ind.shape[0]
+        
+        if k == 0:  # no nonzero coefficients
+            print('0')
+            return
+        
+        for i in range(k):
+            if i == 0:
+                print('%.5f' % alpha[ind[i]], end='')
+            else:
+                if alpha[ind[i]] > 0:
+                    print(' + %.5f' % alpha[ind[i]], end='')
+                else:
+                    print(' - %.5f' % -alpha[ind[i]], end='')
+                        
+            self._displayFourierTerm(c[:, ind[i]])
+        print('')
+        
+    def _displayFourierTerm(self, freq):
+        d = freq.shape[0]
+        if _np.all(freq == 0):
+            print('1', end='')
+        else:
+            for j in range(d):
+                if freq[j] == 0:
+                    continue
+                print(' cos(%d*x_%d) + sin(%d*x_%d)' % (freq[j], j+1, freq[j], j+1), end='')
+
+# auxiliary function
+def allFourierFrequencies(d, p):
+    '''
+    Generate all combinations of frequencies in d dimensions with maximum frequency p.
+    '''
+    # Example: For d = 3 and p = 2, we might get frequencies like
+    # [[ 0  1  0  0  2  1  1  0  0  0]
+    #  [ 0  0  1  0  0  1  0  2  1  0]
+    #  [ 0  0  0  1  0  0  1  0  1  2]]
+    c = _np.mgrid[tuple(slice(0, p+1) for _ in range(d))].reshape(d, -1)
+    return c

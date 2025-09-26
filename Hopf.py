@@ -12,6 +12,7 @@ import time
 import SDE_toolbox as SDE
 import pickle
 
+
 def loadParams(D, delta):
 
     f = SDE.Hopf2D
@@ -199,28 +200,55 @@ def generateData(D, delta):
     print('')
     print(f'Running delta  = {delta:0.3f}')
     print('')
+    
+    
+    path = f'./Hopf/d={delta:0.3f}_D={D:0.2f}'
+    
+    with open(f'{path}/empirical/PsiRedCoefs.pck', 'rb') as file_handle:
+        K1_coefs = pickle.load(file_handle)
+        K2_coefs = pickle.load(file_handle)
+        
+    ###########################################################################
+    ####  Build  the reduced LDagger operator  ################################
+    ###########################################################################
+    
+    def aFunc(X):
+        return SDE.fourier_fit_array(X, K1_coefs)
+    
+    def sqrt2DFunc(X):
+        return np.sqrt(2*SDE.fourier_fit_array(X, K2_coefs))
 
+    phase = np.linspace(0, 2*np.pi, 400, endpoint=False)
+    a = aFunc(phase)
+    sqrt2D = sqrt2DFunc(phase)
+    
+    plt.plot(phase, a)
+    plt.plot(phase, sqrt2D)
+    plt.show()
+    
+    print(f'<a> = {np.mean(a)}')
+    print(f'<sqrt2D> = {np.mean(sqrt2D)}')
     
     #Build the phase (only need to do this once)
-    #buildPsi(D, delta)
+    # buildPsi(D, delta)
     
     #Load phase function
-    PsiFunc = SDE.PsiFunc2D(f'./Hopf/d={delta:0.3f}_D={D:0.2f}')
+    # PsiFunc = SDE.PsiFunc2D(f'./Hopf/d={delta:0.3f}_D={D:0.2f}')
     
     #Visualize traj and phase
-    sampleTrajectory(D, delta, PsiFunc)
+    # sampleTrajectory(D, delta, PsiFunc)
 
     #Empirical reduction
-    reduction(D, delta, PsiFunc)
+    # reduction(D, delta, PsiFunc)
     
     #Stats
-    longTermStats(D, delta)
+    # longTermStats(D, delta)
     
     #PRC
-    buildPRC(D, delta, PsiFunc)
+    # buildPRC(D, delta, PsiFunc)
     
     #Phase response
-	phaseResponse(D, delta, PsiFunc)
+    # phaseResponse(D, delta, PsiFunc)
 
     return
 
@@ -228,7 +256,8 @@ def main():
 
     delta1 = -0.01; delta2 = 1
     
-    DList = np.linspace(0.01, 0.1, 10)
+    # DList = np.linspace(0.01, 0.1, 10)
+    DList = [0.01, 0.08]
     for D in DList:
         print(f'D = {D:0.2f}')
         generateData(D, delta1)
